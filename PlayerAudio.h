@@ -20,7 +20,7 @@ public:
     double getPosition() const;
 
 private:
-    juce::AudioFormatManager formatManager;
+    juce::AudioFormatManager formataudio;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
 
