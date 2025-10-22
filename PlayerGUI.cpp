@@ -50,3 +50,16 @@ void PlayerGUI::resized() {
 	end.setBounds(490, 50, 100, 60);
 
 }
+void PlayerGUI::buttonClicked(juce::Button* button)
+{
+	if (button == &loadbutton){}
+	else if (button == &playbutton)
+		player.play();
+	else if (button == &stopbutton)
+		player.pause();
+	else if (button == &gotostart)
+		player.gotostart();
+	else if (button == &end)
+		player.end();
+}
+
