@@ -18,6 +18,7 @@ public:
     void setPosition(double pos);
     double getLength() const;
     double getPosition() const;
+    void setLooping(bool loop);
 
 private:
     juce::AudioFormatManager formataudio;
