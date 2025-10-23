@@ -17,6 +17,8 @@ private:
     juce::TextButton stopbutton{ "pause ||" };
     juce::TextButton gotostart{ "go to start|◄" };
     juce::TextButton end{ "end ►|" };
+    juce::TextButton loopButton{ "Loop 🔁" };
+    bool isLooping = false;
 
     PlayerAudio player; 
     std::unique_ptr<juce::FileChooser> fileChooser;
