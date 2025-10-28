@@ -1,22 +1,41 @@
 #include "MainComponent.h"
+#include "PlayerAudio.h"
 
 MainComponent::MainComponent()
 {
     formatManager.registerBasicFormats();
 
-    // Add buttons
-    for (auto* btn : { &loadButton, &restartButton , &stopButton })
-    {
-        btn->addListener(this);
-        addAndMakeVisible(btn);
-    }
-    loopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::gold);
-    loopButton.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
-    loopButton.setColour(juce::TextButton::textColourOnId, juce::Colours::red);
-    loopButton.addListener(this);
-    addAndMakeVisible(loopButton);
+    // === Load Button ===
+    addAndMakeVisible(loadButton);
+    loadButton.setButtonText("Load");
+    loadButton.addListener(this);
 
-    // Volume slider
+    // === Play/Pause Button ===
+    addAndMakeVisible(playPauseButton);
+    playPauseButton.setButtonText("Play >");
+    playPauseButton.addListener(this);
+
+    // === Loop Button ===
+    addAndMakeVisible(loopButton);
+    loopButton.setButtonText("Loop");
+    loopButton.addListener(this);
+
+    // === Go To Start Button ===
+    addAndMakeVisible(goToStartButton);
+    goToStartButton.setButtonText("Start |<");
+    goToStartButton.addListener(this);
+
+    // === End Button ===
+    addAndMakeVisible(endButton);
+    endButton.setButtonText("End >|");
+    endButton.addListener(this);
+
+    // === Mute Button ===
+    addAndMakeVisible(muteButton);
+    muteButton.setButtonText("Mute");
+    muteButton.addListener(this);
+
+    // === Volume Slider ===
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(0.5);
     volumeSlider.addListener(this);
@@ -31,6 +50,7 @@ MainComponent::~MainComponent()
     shutdownAudio();
 }
 
+// ===== Audio callbacks =====
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
@@ -46,6 +66,7 @@ void MainComponent::releaseResources()
     transportSource.releaseResources();
 }
 
+// ===== GUI =====
 void MainComponent::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
@@ -55,23 +76,19 @@ void MainComponent::resized()
 {
     int y = 20;
     loadButton.setBounds(20, y, 100, 40);
-    restartButton.setBounds(140, y, 80, 40);
-    stopButton.setBounds(240, y, 80, 40);
-    loopButton.setBounds(340, y, 100, 40);
-    /*prevButton.setBounds(340, y, 80, 40);
-    nextButton.setBounds(440, y, 80, 40);*/
-
+    playPauseButton.setBounds(140, y, 100, 40);
+    goToStartButton.setBounds(260, y, 100, 40);
+    endButton.setBounds(380, y, 100, 40);
+    loopButton.setBounds(500, y, 100, 40);
+    muteButton.setBounds(620, y, 100, 40);
     volumeSlider.setBounds(20, 100, getWidth() - 40, 30);
 }
 
+// ===== Button actions =====
 void MainComponent::buttonClicked(juce::Button* button)
 {
     if (button == &loadButton)
     {
-        juce::FileChooser chooser("Select audio files...",
-            juce::File{},
-            "*.wav;*.mp3");
-
         fileChooser = std::make_unique<juce::FileChooser>(
             "Select an audio file...",
             juce::File{},
@@ -86,37 +103,79 @@ void MainComponent::buttonClicked(juce::Button* button)
                 {
                     if (auto* reader = formatManager.createReaderFor(file))
                     {
-                        // 🔑 Disconnect old source first
                         transportSource.stop();
                         transportSource.setSource(nullptr);
                         readerSource.reset();
 
-                        // Create new reader source
                         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-
-                        // Attach safely
-                        transportSource.setSource(readerSource.get(),
-                            0,
-                            nullptr,
-                            reader->sampleRate);
-                        transportSource.start();
+                        transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
                     }
                 }
             });
     }
-    if (button == &loopButton)
+    else if (button == &playPauseButton)
     {
-        isLooping = !isLooping; 
-        loopButton.setButtonText(isLooping ? "Loop: ON" : "Loop: OFF");
-
+        if (isPlaying)
+        {
+            transportSource.stop();
+            playPauseButton.setButtonText("Play >");
+        }
+        else
+        {
+            transportSource.start();
+            playPauseButton.setButtonText("Pause ||");
+        }
+        isPlaying = !isPlaying;
+    }
+    else if (button == &loopButton)
+    {
+        isLooping = !isLooping;
         if (readerSource != nullptr)
-            readerSource->setLooping(isLooping);
+            readerSource->setLooping(isLooping);  
+        loopButton.setButtonText(isLooping ? "Loop ON" : "Loop OFF");
+    }
+
+
+    else if (button == &goToStartButton)
+    {
+        transportSource.setPosition(0.0);
+    }
+
+    else if (button == &endButton)
+    {
+        transportSource.setPosition(transportSource.getLengthInSeconds());
+    }
+    else if (button == &muteButton)
+    {
+        if (!isMuted)
+        {
+            previousVolume = (float)volumeSlider.getValue(); // حفظ القيمة الحالية
+            transportSource.setGain(0.0f);
+            muteButton.setButtonText("Unmute");
+        }
+        else
+        {
+            transportSource.setGain(previousVolume);         // استرجاع الصوت
+            muteButton.setButtonText("Mute");
+        }
+        isMuted = !isMuted;
     }
 
 }
 
+
 void MainComponent::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &volumeSlider)
-        transportSource.setGain((float)slider->getValue());
+    {
+       
+        if (isMuted)
+        {
+            isMuted = false;
+            muteButton.setButtonText("Mute");
+        }
+
+        transportSource.setGain((float)volumeSlider.getValue());
+    }
 }
+
