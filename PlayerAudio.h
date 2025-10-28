@@ -7,23 +7,17 @@ public:
     PlayerAudio();
     ~PlayerAudio();
 
-    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
-    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
-    void releaseResources();
-
     bool loadFile(const juce::File& file);
     void play();
-    void stop();
-    void setGain(float gain);
-    void setPosition(double pos);
-    double getLength() const;
-    double getPosition() const;
+    void pause();
+    void gotostart();
+    void end();
     void setLooping(bool loop);
 
 private:
-    juce::AudioFormatManager formataudio;
-    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+    juce::AudioFormatManager formatAudio;
     juce::AudioTransportSource transportSource;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };
