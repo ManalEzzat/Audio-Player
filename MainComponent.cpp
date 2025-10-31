@@ -43,6 +43,18 @@ MainComponent::MainComponent()
 
     setSize(500, 250);
     setAudioChannels(0, 2);
+
+    //adding labels
+    addAndMakeVisible(titleLabel);
+    addAndMakeVisible(authorLabel);
+    addAndMakeVisible(durationLabel);
+    
+
+    titleLabel.setText("Title: ", juce::dontSendNotification);
+    authorLabel.setText("Author: ", juce::dontSendNotification);
+    durationLabel.setText("Duration: ", juce::dontSendNotification);
+   
+  
 }
 
 MainComponent::~MainComponent()
@@ -82,6 +94,11 @@ void MainComponent::resized()
     loopButton.setBounds(500, y, 100, 40);
     muteButton.setBounds(620, y, 100, 40);
     volumeSlider.setBounds(20, 100, getWidth() - 40, 30);
+
+    titleLabel.setBounds(20, 150, 300, 30);
+    authorLabel.setBounds(20, 180, 300, 30);
+    durationLabel.setBounds(20, 210, 300, 30);
+   
 }
 
 // ===== Button actions =====
@@ -109,8 +126,32 @@ void MainComponent::buttonClicked(juce::Button* button)
 
                         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
                         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+
+                    // metadata 
+                    auto metadata = reader->metadataValues;
+                    juce::String title = metadata["Title"];
+                    juce::String author = metadata["Author"];
+                    juce::String duration = juce::String(reader->lengthInSamples / reader->sampleRate) + " sec";
+                   
+
+                    if (title.isEmpty()) {
+                        title = file.getFileName();
+                        titleLabel.setText("Title: " + title, juce::dontSendNotification);
+                        authorLabel.setText("Author:--------" + author, juce::dontSendNotification);
+                        durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
+                        
                     }
+                    // show labels in GUI 
+                    else {
+                        titleLabel.setText("Title: " + title, juce::dontSendNotification);
+                        authorLabel.setText("Author: " + author, juce::dontSendNotification);
+                        durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
+                       
+                    }
+                    }
+
                 }
+
             });
     }
     else if (button == &playPauseButton)
@@ -131,7 +172,7 @@ void MainComponent::buttonClicked(juce::Button* button)
     {
         isLooping = !isLooping;
         if (readerSource != nullptr)
-            readerSource->setLooping(isLooping);  
+            readerSource->setLooping(isLooping);
         loopButton.setButtonText(isLooping ? "Loop ON" : "Loop OFF");
     }
 
@@ -168,7 +209,7 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &volumeSlider)
     {
-       
+
         if (isMuted)
         {
             isMuted = false;
@@ -178,4 +219,5 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
         transportSource.setGain((float)volumeSlider.getValue());
     }
 }
+
 
