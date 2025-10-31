@@ -25,15 +25,21 @@ private:
     juce::AudioTransportSource transportSource;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 
+    juce::Label titleLabel; // to add title in gui title
+    juce::Label authorLabel; // to add the text in gui author 
+    juce::Label durationLabel; // to add duration in gui duration
+ 
+   
+    
     juce::TextButton loadButton;
     juce::TextButton playPauseButton;
     juce::TextButton loopButton;
     juce::TextButton goToStartButton;
     juce::TextButton endButton;
 
-    juce::TextButton muteButton;   
-    bool isMuted = false;          
-    float previousVolume = 0.5f;   
+    juce::TextButton muteButton;
+    bool isMuted = false;
+    float previousVolume = 0.5f;
 
     // === Slider ===
     juce::Slider volumeSlider;
