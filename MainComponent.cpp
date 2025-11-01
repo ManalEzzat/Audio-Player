@@ -1,5 +1,8 @@
 #include "MainComponent.h"
 #include "PlayerAudio.h"
+# include <vector>
+
+
 
 MainComponent::MainComponent()
 {
@@ -48,13 +51,18 @@ MainComponent::MainComponent()
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(authorLabel);
     addAndMakeVisible(durationLabel);
-    
 
     titleLabel.setText("Title: ", juce::dontSendNotification);
     authorLabel.setText("Author: ", juce::dontSendNotification);
     durationLabel.setText("Duration: ", juce::dontSendNotification);
-   
-  
+
+    // add playlist 
+    addAndMakeVisible(audiolistbox);
+    audiolistbox.setModel(this);
+    audiolistbox.setRowHeight(30);
+    setSize(800, 400);
+    setAudioChannels(0, 2);
+
 }
 
 MainComponent::~MainComponent()
@@ -87,18 +95,22 @@ void MainComponent::paint(juce::Graphics& g)
 void MainComponent::resized()
 {
     int y = 20;
+
     loadButton.setBounds(20, y, 100, 40);
     playPauseButton.setBounds(140, y, 100, 40);
     goToStartButton.setBounds(260, y, 100, 40);
     endButton.setBounds(380, y, 100, 40);
     loopButton.setBounds(500, y, 100, 40);
     muteButton.setBounds(620, y, 100, 40);
-    volumeSlider.setBounds(20, 100, getWidth() - 40, 30);
 
-    titleLabel.setBounds(20, 150, 300, 30);
-    authorLabel.setBounds(20, 180, 300, 30);
-    durationLabel.setBounds(20, 210, 300, 30);
-   
+    volumeSlider.setBounds(20, 80, getWidth() - 40, 30);
+
+    titleLabel.setBounds(20, 120, 300, 30);
+    authorLabel.setBounds(20, 150, 300, 30);
+    durationLabel.setBounds(20, 180, 300, 30);
+
+
+    audiolistbox.setBounds(20, 280, getWidth() - 40, getHeight() - 300);
 }
 
 // ===== Button actions =====
@@ -111,13 +123,17 @@ void MainComponent::buttonClicked(juce::Button* button)
             juce::File{},
             "*.wav;*.mp3");
 
-        fileChooser->launchAsync(
-            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-            [this](const juce::FileChooser& fc)
+        fileChooser->launchAsync( // lambada function
+
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems,
+            [this](const juce::FileChooser& audios)
             {
-                auto file = fc.getResult();
-                if (file.existsAsFile())
-                {
+                juce::Array<juce::File> files = audios.getResults();
+                for (auto file : files) {
+                    audiolist.push_back(file);
+                    audiolistbox.updateContent();
+
+
                     if (auto* reader = formatManager.createReaderFor(file))
                     {
                         transportSource.stop();
@@ -127,27 +143,31 @@ void MainComponent::buttonClicked(juce::Button* button)
                         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
                         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
 
-                    // metadata 
-                    auto metadata = reader->metadataValues;
-                    juce::String title = metadata["Title"];
-                    juce::String author = metadata["Author"];
-                    juce::String duration = juce::String(reader->lengthInSamples / reader->sampleRate) + " sec";
-                   
+                        // metadata 
+                        auto metadata = reader->metadataValues;
+                        juce::String title = metadata["Title"];
+                        juce::String author = metadata["Author"];
+                        juce::String year = metadata["Year"];
+                        juce::String type = metadata["Type"];
+                        juce::String duration = juce::String(reader->lengthInSamples / reader->sampleRate) + " sec";
 
-                    if (title.isEmpty()) {
-                        title = file.getFileName();
-                        titleLabel.setText("Title: " + title, juce::dontSendNotification);
-                        authorLabel.setText("Author:--------" + author, juce::dontSendNotification);
-                        durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
-                        
-                    }
-                    // show labels in GUI 
-                    else {
-                        titleLabel.setText("Title: " + title, juce::dontSendNotification);
-                        authorLabel.setText("Author: " + author, juce::dontSendNotification);
-                        durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
-                       
-                    }
+
+                        if (title.isEmpty()) {
+                            title = file.getFileName();
+                            titleLabel.setText("Title: " + title, juce::dontSendNotification);
+
+
+                        }
+                        // show labels in GUI 
+                        else {
+                            titleLabel.setText("Title: " + title, juce::dontSendNotification);
+                            authorLabel.setText("Author: " + author, juce::dontSendNotification);
+                            durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
+
+
+                        }
+
+
                     }
 
                 }
@@ -220,4 +240,71 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
     }
 }
 
+// audiolist  gui
 
+int MainComponent::getNumRows() {
+    DBG("Number of audio files: " << audiolist.size());
+    return audiolist.size();
+}
+void MainComponent::paintListBoxItem(int numaudios, juce::Graphics& g, int width, int height, bool audioselected) {
+
+    if (audioselected) {
+        g.fillAll(juce::Colours::yellow);
+    }
+    else {
+        g.fillAll(juce::Colours::darkgrey);
+    }
+    if (numaudios < audiolist.size()) {
+        g.drawText(audiolist[numaudios].getFileName(),
+            10, 0, width - 10, height,
+            juce::Justification::centredLeft, true);
+    }
+}
+
+// audiolist player 
+void MainComponent::selectedRowsChanged(int audioselected) {
+    if (audioselected >= 0 && audioselected < audiolist.size()) {
+
+        audioindex = audioselected;
+        auto file = audiolist[audioindex];
+
+        if (auto* reader = formatManager.createReaderFor(file))
+        {
+
+            transportSource.stop();
+            transportSource.setSource(nullptr);
+            readerSource.reset();
+
+            readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
+            transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+
+            // metadata 
+            auto metadata = reader->metadataValues;
+            juce::String title = metadata["Title"];
+            juce::String author = metadata["Author"];
+            juce::String year = metadata["Year"];
+            juce::String type = metadata["Type"];
+            juce::String duration = juce::String(reader->lengthInSamples / reader->sampleRate) + " sec";
+
+
+
+            if (title.isEmpty()) {
+                title = file.getFileName();
+                titleLabel.setText("Title: " + title, juce::dontSendNotification);
+                authorLabel.setText("Author:--------" + author, juce::dontSendNotification);
+                durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
+
+            }
+            // show labels in GUI 
+            else {
+                titleLabel.setText("Title: " + title, juce::dontSendNotification);
+                authorLabel.setText("Author: " + author, juce::dontSendNotification);
+                durationLabel.setText("Duration: " + duration, juce::dontSendNotification);
+
+            }
+        }
+
+    }
+
+
+}
