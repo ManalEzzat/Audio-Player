@@ -1,53 +1,53 @@
-#include "PlayerAudio.h"
-#include <iostream>
-using namespace std;
+# include "PlayerAudio.h"
+# include <JuceHeader.h>
 
-PlayerAudio::PlayerAudio()
+PlayerAudio::PlayerAudio() {
+    formatManager.registerBasicFormats();    
+}
+PlayerAudio::~PlayerAudio() {
+}
+void PlayerAudio::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-    formatAudio.registerBasicFormats();
+    transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-PlayerAudio::~PlayerAudio() {}
-
-bool PlayerAudio::loadFile(const juce::File& file)
+void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    if (auto* reader = formatAudio.createReaderFor(file))
+    transportSource.getNextAudioBlock(bufferToFill);
+}
+
+void PlayerAudio::releaseResources()
+{
+    transportSource.releaseResources();
+}
+
+void PlayerAudio::loadFile(const juce::File& file)
+{
+    if (auto* reader = formatManager.createReaderFor(file))
     {
         transportSource.stop();
         transportSource.setSource(nullptr);
         readerSource.reset();
 
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-
         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
-
-        return true;
     }
-    return false;
 }
 
-void PlayerAudio::play()
-{
-    transportSource.start();
-}
 
-void PlayerAudio::pause()
-{
+void PlayerAudio::play() {
+    if (readerSource != nullptr)
+       transportSource.start();   
+}
+void PlayerAudio::pause() {
     transportSource.stop();
 }
 
-void PlayerAudio::gotostart()
-{
-    transportSource.setPosition(0.0);
-
-}
-void PlayerAudio::end()
-{
+void PlayerAudio::end() {
     transportSource.setPosition(transportSource.getLengthInSeconds());
 }
 
-void PlayerAudio::setLooping(bool loop)
-{
-    if (readerSource != nullptr)
-        readerSource->setLooping(loop);
+void PlayerAudio::restart() {
+    transportSource.setPosition(0.0);
 }
+
