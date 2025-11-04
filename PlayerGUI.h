@@ -37,6 +37,10 @@ private:
 
     juce::TextButton muteButton;
 
+    juce::Slider positionSlider;
+    juce::Label positionLabel;
+    bool isDragging = false;
+
     juce::Label titlelabel; // to add title in gui title
     juce::Label authorlabel; // to add the text in gui author 
     juce::Label durationlabel; // to add duration in gui duration
