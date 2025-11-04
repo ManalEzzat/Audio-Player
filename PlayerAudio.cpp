@@ -2,12 +2,18 @@
 # include <JuceHeader.h>
 
 PlayerAudio::PlayerAudio() {
-    formatManager.registerBasicFormats();    
+    formatManager.registerBasicFormats();
 }
+
 PlayerAudio::~PlayerAudio() {
+    transportSource.setSource(nullptr);
+    readerSource.reset();
 }
+
 void PlayerAudio::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
+   
+
     transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
@@ -19,9 +25,11 @@ void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
 void PlayerAudio::releaseResources()
 {
     transportSource.releaseResources();
+
+
 }
 
-void PlayerAudio::loadFile(const juce::File& file)
+bool PlayerAudio::loadFile(const juce::File& file)
 {
     if (auto* reader = formatManager.createReaderFor(file))
     {
@@ -31,13 +39,17 @@ void PlayerAudio::loadFile(const juce::File& file)
 
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+        transportSource.start();
+
+        return true;
     }
+    return false;
 }
 
 
 void PlayerAudio::play() {
     if (readerSource != nullptr)
-       transportSource.start();   
+        transportSource.start();
 }
 void PlayerAudio::pause() {
     transportSource.stop();
@@ -50,31 +62,49 @@ void PlayerAudio::end() {
 void PlayerAudio::restart() {
     transportSource.setPosition(0.0);
 }
-void PlayerAudio::setLoopStart()
+
+void PlayerAudio::setGain(float gain)
 {
-    loopStart = transportSource.getCurrentPosition();
-    isLoopActive = false; 
+    transportSource.setGain(gain);
 }
 
-void PlayerAudio::setLoopEnd()
-{
-    loopEnd = transportSource.getCurrentPosition();
-    isLoopActive = true; 
 
-void PlayerAudio::clearLoop()
+
+void PlayerAudio::setPosition(double pos)
 {
-    isLoopActive = false;
-    loopStart = 0.0;
-    loopEnd = 0.0;
+    transportSource.setPosition(pos);
 }
 
-void PlayerAudio::checkLoop()
+double PlayerAudio::getPosition() const
 {
-    if (isLoopActive)
+    return transportSource.getCurrentPosition();
+}
+
+double PlayerAudio::getLength() const
+{
+    return transportSource.getLengthInSeconds();
+}
+
+
+void PlayerAudio::setSpeed(double speed)
+{
+    currentSpeed = speed;
+    if (readerSource != nullptr && readerSource->getAudioFormatReader() != nullptr)
     {
-        double currentPos = transportSource.getCurrentPosition();
-        if (currentPos >= loopEnd)
-            transportSource.setPosition(loopStart);
+        // احفظ الـ position الحالي
+        double currentPosition = transportSource.getCurrentPosition();
+        bool wasPlaying = transportSource.isPlaying();
+
+        auto* reader = readerSource->getAudioFormatReader();
+        double newSampleRate = reader->sampleRate * speed;
+
+        transportSource.setSource(readerSource.get(), 0, nullptr, newSampleRate);
+
+        transportSource.setPosition(currentPosition);
+
+        if (wasPlaying)
+            transportSource.start();
     }
-}
+
+    }
 
