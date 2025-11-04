@@ -40,11 +40,20 @@ PlayerGUI::PlayerGUI(){
    addAndMakeVisible(endButton);
    endButton.setButtonText("End >|");
    endButton.addListener(this);
-   
+
+    // === Position Slider ===
+    addAndMakeVisible(positionSlider);
+    positionSlider.setRange(0.0, 1.0, 0.001);
+    positionSlider.addListener(this);
+    positionSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    positionSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+
    // === add labels ===
    addAndMakeVisible(titlelabel);
    addAndMakeVisible(authorlabel);
    addAndMakeVisible(durationlabel);
+   addAndMakeVisible(positionLabel);
+   positionLabel.setText("0:00 / 0:00", juce::dontSendNotification);
    titlelabel.setText("Title: ", juce::dontSendNotification);
    authorlabel.setText("Author: ", juce::dontSendNotification);
    durationlabel.setText("Duration: ", juce::dontSendNotification);
@@ -54,6 +63,8 @@ PlayerGUI::PlayerGUI(){
    audiolistbox.setModel(this);
    audiolistbox.setRowHeight(30);
    setSize(800, 400);
+   startTimer(100);
+
 }
 PlayerGUI:: ~PlayerGUI() {}
 
@@ -72,7 +83,6 @@ void PlayerGUI::resized() {
     pauseButton.setBounds(290, y, 110, 40);
     goToStartButton.setBounds(420, y, 110, 40);
     endButton.setBounds(550, y, 110, 40);
-
     
     y += 70;
 
@@ -84,14 +94,46 @@ void PlayerGUI::resized() {
     y += 40;
 
     durationlabel.setBounds(30, y, getWidth() - 60, 30);
-
-     
     y += 50;
+   positionSlider.setBounds(50, y, getWidth() - 100, 20);
+    y += 25;
 
+    positionLabel.setBounds(50, y, getWidth() - 100, 20);
+    y += 40;
    
     audiolistbox.setBounds(30, y, getWidth() - 60, getHeight() - y - 30);
 
 }
+
+void PlayerGUI::timerCallback()
+{
+    if (player.transportSource.isPlaying())
+    {
+        double currentPosition = player.transportSource.getCurrentPosition();
+        double totalLength = player.transportSource.getLengthInSeconds();
+
+        if (totalLength > 0.0)
+            positionSlider.setValue(currentPosition / totalLength, juce::dontSendNotification);
+
+        int curMin = (int)(currentPosition / 60);
+        int curSec = (int)((int)currentPosition % 60);
+        int totalMin = (int)(totalLength / 60);
+        int totalSec = (int)((int)totalLength % 60);
+
+        positionLabel.setText(
+            juce::String::formatted("%02d:%02d / %02d:%02d", curMin, curSec, totalMin, totalSec),
+            juce::dontSendNotification);
+    }
+        void PlayerGUI::sliderValueChanged(juce::Slider* slider)
+        {
+            if (slider == &positionSlider && player.readerSource != nullptr)
+            {
+                double totalLength = player.transportSource.getLengthInSeconds();
+                double newPosition = positionSlider.getValue() * totalLength;
+                player.transportSource.setPosition(newPosition);
+            }
+        }
+
 
 
 void PlayerGUI::buttonClicked(juce::Button* button) {
