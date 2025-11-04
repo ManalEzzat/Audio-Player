@@ -2,11 +2,15 @@
 
 MainComponent::MainComponent()
 {
-    addAndMakeVisible(gui); 
-    setSize(700, 400);
+    addAndMakeVisible(gui);
+    setSize(1200, 400);
     setAudioChannels(0, 2);
 }
-MainComponent::~MainComponent() {}
+MainComponent::~MainComponent() 
+{
+    shutdownAudio();
+
+}
 
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
@@ -32,3 +36,4 @@ void MainComponent::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
 }
+
