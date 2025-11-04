@@ -22,14 +22,14 @@ PlayerGUI::PlayerGUI(){
 
 
    // === Loop Button ===
-  // addAndMakeVisible(loopButton);
-   //loopButton.setButtonText("Loop ON");
-   //loopButton.addListener(this);
+   addAndMakeVisible(loopButton);
+   loopButton.setButtonText("Loop ON");
+   loopButton.addListener(this);
 
    // loop off button
-   //addAndMakeVisible(loopButton);
-   //loopButton.setButtonText("Loop OFF");
-   //loopButton.addListener(this);
+   addAndMakeVisible(loopButton);
+   loopButton.setButtonText("Loop OFF");
+   loopButton.addListener(this);
 
    // === Go To Start Button ===
    addAndMakeVisible(goToStartButton);
