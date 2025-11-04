@@ -33,6 +33,9 @@ private:
     juce::TextButton loopButton;
     juce::TextButton goToStartButton;
     juce::TextButton endButton;
+    juce::TextButton setAButton;
+    juce::TextButton setBButton;
+    juce::TextButton clearLoopButton;
 
     juce::ListBox audiolistbox; // to add playlist gui
 
