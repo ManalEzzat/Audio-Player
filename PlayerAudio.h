@@ -18,7 +18,11 @@ public:
 	void pause();
 	void restart();
 	void end();
-	
+    void setLoopStart();
+    void setLoopEnd();
+    void clearLoop();
+    void checkLoop();
+
 
 	std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 	
@@ -33,6 +37,9 @@ private:
 
 	float previousVolume = 1.0f;
 	
+    double loopStart = 0.0;
+    double loopEnd = 0.0;
+    bool isLoopActive = false;
 
 	
 
