@@ -40,6 +40,18 @@ PlayerGUI::PlayerGUI(){
    addAndMakeVisible(endButton);
    endButton.setButtonText("End >|");
    endButton.addListener(this);
+    //===setAButton===
+    addAndMakeVisible(setAButton);
+    setAButton.setButtonText("Set A");
+    setAButton.addListener(this);
+    //===setBButton===
+    addAndMakeVisible(setBButton);
+    setBButton.setButtonText("Set B");
+    setBButton.addListener(this);
+    //===clearLoopButton===
+    addAndMakeVisible(clearLoopButton);
+    clearLoopButton.setButtonText("Clear Loop");
+    clearLoopButton.addListener(this);
 
     // === Position Slider ===
     addAndMakeVisible(positionSlider);
@@ -83,7 +95,12 @@ void PlayerGUI::resized() {
     pauseButton.setBounds(290, y, 110, 40);
     goToStartButton.setBounds(420, y, 110, 40);
     endButton.setBounds(550, y, 110, 40);
-    
+
+    y += 60;
+    setAButton.setBounds(30, y, 110, 40);
+    setBButton.setBounds(160, y, 110, 40);
+    clearLoopButton.setBounds(290, y, 110, 40);
+
     y += 70;
 
       
@@ -123,6 +140,8 @@ void PlayerGUI::timerCallback()
         positionLabel.setText(
             juce::String::formatted("%02d:%02d / %02d:%02d", curMin, curSec, totalMin, totalSec),
             juce::dontSendNotification);
+         
+        player.checkLoop();
     }
         void PlayerGUI::sliderValueChanged(juce::Slider* slider)
         {
@@ -171,6 +190,19 @@ void PlayerGUI::buttonClicked(juce::Button* button) {
     else if (button == &endButton) {
         player.end();
     }
+    else if (button == &setAButton)
+    {
+        player.setLoopStart();
+    }
+    else if (button == &setBButton)
+    {
+        player.setLoopEnd();
+    }
+    else if (button == &clearLoopButton)
+    {
+        player.clearLoop();
+    }
+
     
 }
 
