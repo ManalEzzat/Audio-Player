@@ -50,4 +50,31 @@ void PlayerAudio::end() {
 void PlayerAudio::restart() {
     transportSource.setPosition(0.0);
 }
+void PlayerAudio::setLoopStart()
+{
+    loopStart = transportSource.getCurrentPosition();
+    isLoopActive = false; 
+}
+
+void PlayerAudio::setLoopEnd()
+{
+    loopEnd = transportSource.getCurrentPosition();
+    isLoopActive = true; 
+
+void PlayerAudio::clearLoop()
+{
+    isLoopActive = false;
+    loopStart = 0.0;
+    loopEnd = 0.0;
+}
+
+void PlayerAudio::checkLoop()
+{
+    if (isLoopActive)
+    {
+        double currentPos = transportSource.getCurrentPosition();
+        if (currentPos >= loopEnd)
+            transportSource.setPosition(loopStart);
+    }
+}
 
