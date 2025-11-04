@@ -5,7 +5,7 @@
 class PlayerGUI :public juce::Component,
     public juce::Button::Listener,
     public juce::ListBoxModel
-
+    public juce::Timer
 {
 public:
     PlayerGUI();
