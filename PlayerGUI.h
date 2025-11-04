@@ -17,6 +17,7 @@ public:
     PlayerAudio& getPlayer() { return player; }
 
     void buttonClicked(juce::Button* button) override;
+    void timerCallback() override;   
 
     int getNumRows() override;
     void paintListBoxItem(int numaudios, juce::Graphics& g, int width, int height, bool audioselected);
