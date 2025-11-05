@@ -91,7 +91,7 @@ void PlayerAudio::setSpeed(double speed)
     currentSpeed = speed;
     if (readerSource != nullptr && readerSource->getAudioFormatReader() != nullptr)
     {
-        // احفظ الـ position الحالي
+         
         double currentPosition = transportSource.getCurrentPosition();
         bool wasPlaying = transportSource.isPlaying();
 
