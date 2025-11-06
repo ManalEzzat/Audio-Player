@@ -12,7 +12,7 @@ PlayerAudio::~PlayerAudio() {
 
 void PlayerAudio::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-   
+
 
     transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
@@ -91,7 +91,7 @@ void PlayerAudio::setSpeed(double speed)
     currentSpeed = speed;
     if (readerSource != nullptr && readerSource->getAudioFormatReader() != nullptr)
     {
-         
+
         double currentPosition = transportSource.getCurrentPosition();
         bool wasPlaying = transportSource.isPlaying();
 
@@ -106,5 +106,29 @@ void PlayerAudio::setSpeed(double speed)
             transportSource.start();
     }
 
-    }
+}
 
+void PlayerAudio::tenforward() {
+
+
+    if (readerSource == nullptr) return;
+    double currentpos = transportSource.getCurrentPosition();
+    double length = transportSource.getLengthInSeconds();
+    currentpos = currentpos + 10;
+    if (currentpos > length) {
+        currentpos = length;
+
+    }
+    transportSource.setPosition(currentpos);
+
+}
+void PlayerAudio::tenbackward() {
+
+    if (readerSource == nullptr) return;
+    double currentpos = transportSource.getCurrentPosition();
+    currentpos = currentpos - 10;
+    if (currentpos < 0) {
+        currentpos = 0;
+    }
+    transportSource.setPosition(currentpos);
+}
