@@ -23,6 +23,8 @@ public:
     void setPosition(double pos);
     double getPosition() const;
     double getLength() const;
+    void tenforward();
+    void tenbackward();
 
 
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
@@ -30,11 +32,11 @@ public:
 private:
     juce::AudioFormatManager formatManager;
     juce::AudioTransportSource transportSource;
-    std::unique_ptr<juce::ResamplingAudioSource> resamplingSource;  
+    std::unique_ptr<juce::ResamplingAudioSource> resamplingSource;
     std::unique_ptr<juce::FileChooser> fileChooser;
     double currentSpeed = 1.0;
     float previousVolume = 1.0f;
-   
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };
