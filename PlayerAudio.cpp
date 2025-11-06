@@ -112,23 +112,23 @@ void PlayerAudio::tenforward() {
 
 
     if (readerSource == nullptr) return;
-    double currentpos = transportSource.getCurrentPosition();
+    double pos = transportSource.getCurrentPosition();
     double length = transportSource.getLengthInSeconds();
-    currentpos = currentpos + 10;
-    if (currentpos > length) {
-        currentpos = length;
+    pos = pos + 10;
+    if (pos > length) {
+        pos = length;
 
     }
-    transportSource.setPosition(currentpos);
+    transportSource.setPosition(pos);
 
 }
 void PlayerAudio::tenbackward() {
 
     if (readerSource == nullptr) return;
-    double currentpos = transportSource.getCurrentPosition();
-    currentpos = currentpos - 10;
-    if (currentpos < 0) {
-        currentpos = 0;
+    double pos = transportSource.getCurrentPosition();
+    pos = pos - 10;
+    if (pos < 0) {
+        pos = 0;
     }
-    transportSource.setPosition(currentpos);
+    transportSource.setPosition(pos);
 }
