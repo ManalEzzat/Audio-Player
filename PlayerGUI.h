@@ -37,10 +37,12 @@ private:
     juce::TextButton goToStartButton;
     juce::TextButton endButton;
     juce::TextButton muteButton;
+    juce::TextButton addtenforward;
+    juce::TextButton addtenbackward;
 
     bool isMuted = false;
     float previousVolume = 0.5f;
-     
+
     juce::ListBox audiolistbox; // to add playlist gui
 
 
@@ -49,7 +51,7 @@ private:
     juce::Label durationlabel; // to add duration in gui duration
     juce::Label timeLabel;
 
-    juce::Slider volumeSlider; 
+    juce::Slider volumeSlider;
     juce::Slider speedSlider;
     juce::Slider positionSlider;
 
