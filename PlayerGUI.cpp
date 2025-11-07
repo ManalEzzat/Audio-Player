@@ -1,7 +1,12 @@
 # include <JuceHeader.h>
 # include "PlayerGUI.h"
 
-PlayerGUI::PlayerGUI() {
+PlayerGUI::PlayerGUI()
+    : thumbnailCache(5),
+    audioThumbnail(512, formatManager, thumbnailCache)
+{
+
+
 
     //===volume slider===
     volumeSlider.setRange(0.0, 1.0, 0.01);
@@ -16,7 +21,7 @@ PlayerGUI::PlayerGUI() {
     speedSlider.addListener(this);
     addAndMakeVisible(speedSlider);
 
-    //===Progress Bar===
+    //===position slider===
     positionSlider.setRange(0.0, 1.0, 0.001);
     positionSlider.setValue(0.0);
     positionSlider.addListener(this);
@@ -43,15 +48,25 @@ PlayerGUI::PlayerGUI() {
     pauseButton.addListener(this);
 
 
-    // === Loop Button ===
-   // addAndMakeVisible(loopButton);
-    //loopButton.setButtonText("Loop ON");
-    //loopButton.addListener(this);
+    //=== fullLoop Button ===
+    addAndMakeVisible(fullLoopButton);
+    fullLoopButton.setButtonText("FullLoop");
+    fullLoopButton.addListener(this);
 
-    // loop off button
-    //addAndMakeVisible(loopButton);
-    //loopButton.setButtonText("Loop OFF");
-    //loopButton.addListener(this);
+    //==sectionloop button==
+    addAndMakeVisible(sectionLoopButton);
+    sectionLoopButton.setButtonText("SectionLoop");
+    sectionLoopButton.addListener(this);
+
+    //== StartLoopButton==
+    addAndMakeVisible(StartLoopButton);
+    StartLoopButton.setButtonText(" StartLoop");
+    StartLoopButton.addListener(this);
+
+    //== EndLoopButton==
+    addAndMakeVisible(EndLoopButton);
+    EndLoopButton.setButtonText(" EndLoop");
+    EndLoopButton.addListener(this);
 
     // === Go To Start Button ===
     addAndMakeVisible(goToStartButton);
@@ -87,6 +102,9 @@ PlayerGUI::PlayerGUI() {
     addAndMakeVisible(audiolistbox);
     audiolistbox.setModel(this);
     audiolistbox.setRowHeight(30);
+
+    formatManager.registerBasicFormats();
+
     setSize(800, 400);
     startTimer(100);
 
@@ -98,55 +116,116 @@ PlayerGUI::PlayerGUI() {
     addtenbackward.setButtonText("Backward 10s");
     addtenbackward.addListener(this);
 
+
+    auto setupButtonColors = [](juce::TextButton& button) {
+        button.setColour(juce::TextButton::buttonColourId, juce::Colours::lightgrey);
+        button.setColour(juce::TextButton::buttonOnColourId, juce::Colours::darkgrey);
+        button.setColour(juce::TextButton::textColourOffId, juce::Colours::black);  
+        button.setColour(juce::TextButton::textColourOnId, juce::Colours::black);   
+        };
+
+    setupButtonColors(loadButton);
+    setupButtonColors(playButton);
+    setupButtonColors(pauseButton);
+    setupButtonColors(fullLoopButton);
+    setupButtonColors(sectionLoopButton);
+    setupButtonColors(StartLoopButton);
+    setupButtonColors(EndLoopButton);
+    setupButtonColors(goToStartButton);
+    setupButtonColors(endButton);
+    setupButtonColors(muteButton);
+    setupButtonColors(addtenforward);
+    setupButtonColors(addtenbackward);
+
 }
 PlayerGUI:: ~PlayerGUI() {}
 
 void PlayerGUI::paint(juce::Graphics& g) {
+    g.fillAll(juce::Colours::black); 
 
-    g.fillAll(juce::Colours::darkgrey);
+    juce::Rectangle<int> waveformArea(560, 10, 420, 165);
+
+    g.setColour(juce::Colours::black);
+    g.fillRect(waveformArea);
+
+    g.setColour(juce::Colour(0xff555555));
+    g.drawRect(waveformArea, 2);
+
+    if (audioThumbnail.getTotalLength() > 0.0)
+    {
+        g.setColour(juce::Colour(0xff4DA6FF));
+        audioThumbnail.drawChannels(g, waveformArea.reduced(3),
+            0.0, audioThumbnail.getTotalLength(),
+            0.9f);
+    }
+
+    
+    if (player.getLength() > 0.0)
+    {
+        double currentPos = player.getPosition();
+        double totalLength = player.getLength();
+        double ratio = currentPos / totalLength;
+
+        int pointerX = waveformArea.getX() + (int)(ratio * waveformArea.getWidth());
+
+        g.setColour(juce::Colours::white);  
+        g.drawLine(pointerX, waveformArea.getY(),
+            pointerX, waveformArea.getBottom(), 3.0f);
+    }
+
+
 }
+
 
 
 void PlayerGUI::resized() {
+    int margin = 10;
+    
+    audiolistbox.setBounds(10, 10, 540, 230);
 
-    int y = 20;
+    
+    int waveX = 560;  
+    int waveY = 10;
+  
 
-    loadButton.setBounds(30, y, 110, 40);
-    playButton.setBounds(160, y, 110, 40);
-    pauseButton.setBounds(290, y, 110, 40);
+    int posSliderY = waveY + 175;
+    positionSlider.setBounds(waveX, posSliderY, 420, 30);
 
-    addtenbackward.setBounds(420, y, 110, 40);   // << Back 10s
-    addtenforward.setBounds(550, y, 110, 40);    // >> Forward 10s
+   
+    int timeerY = posSliderY + 30 + 5;
+    timeLabel.setBounds(waveX, timeerY, 420, 20);
 
-    goToStartButton.setBounds(680, y, 110, 40);
-    endButton.setBounds(810, y, 110, 40);
-    muteButton.setBounds(940, y, 110, 40);
+   
+    int metadataX = 10;
+    titlelabel.setBounds(metadataX, 260, 980, 30);
+    authorlabel.setBounds(metadataX, 310, 980, 30);
+    durationlabel.setBounds(metadataX, 360, 980, 30);
 
-    y += 50;
-    volumeSlider.setBounds(20, y, getWidth() - 40, 30);
+ 
+    volumeSlider.setBounds(10, 410, 470, 30);
+    speedSlider.setBounds(520, 410, 470, 30);
 
-    y += 40;
-    speedSlider.setBounds(20, y, getWidth() - 40, 30);
 
-    y += 40;
-    positionSlider.setBounds(30, y, getWidth() - 40, 30);
+    int btnWidth = 110;
+    int btnHeight = 40;
 
-    y += 20;
-    timeLabel.setBounds(30, y, getWidth() - 60, 20);
+   
+    loadButton.setBounds(10, 460, btnWidth, btnHeight);
+    playButton.setBounds(184, 460, btnWidth, btnHeight);
+    pauseButton.setBounds(358, 460, btnWidth, btnHeight);
+    goToStartButton.setBounds(532, 460, btnWidth, btnHeight);
+    endButton.setBounds(706, 460, btnWidth, btnHeight);
+    muteButton.setBounds(880, 460, btnWidth, btnHeight);
 
-    y += 50;
-    titlelabel.setBounds(30, y, getWidth() - 60, 30);
-    y += 40;
 
-    authorlabel.setBounds(30, y, getWidth() - 60, 30);
-    y += 40;
-
-    durationlabel.setBounds(30, y, getWidth() - 60, 30);
-
-    y += 50;
-    audiolistbox.setBounds(30, y, getWidth() - 60, getHeight() - y - 30);
+    
+    addtenbackward.setBounds(10, 530, btnWidth, btnHeight);
+    addtenforward.setBounds(184, 530, btnWidth, btnHeight);
+    fullLoopButton.setBounds(358, 530, btnWidth, btnHeight);
+    sectionLoopButton.setBounds(532, 530, btnWidth, btnHeight);
+    StartLoopButton.setBounds(706, 530, btnWidth, btnHeight);
+    EndLoopButton.setBounds(880, 530, btnWidth, btnHeight);
 }
-
 
 
 
@@ -185,6 +264,33 @@ void PlayerGUI::buttonClicked(juce::Button* button) {
     else if (button == &endButton) {
         player.end();
     }
+
+    else if (button == &fullLoopButton)
+    {
+        fullLoopEnabled = !fullLoopEnabled;
+        player.FullLoop(fullLoopEnabled);
+        fullLoopButton.setButtonText(fullLoopEnabled ? "Full Loop ON" : "Full Loop OFF");
+    }
+    else if (button == &sectionLoopButton)
+    {
+        sectionLoopEnabled = !sectionLoopEnabled;
+        player.SectionLoop(sectionLoopEnabled, loopStart, loopEnd);
+        sectionLoopButton.setButtonText(sectionLoopEnabled ? "Section Loop ON" : "Section Loop OFF");
+    }
+    else if (button == &StartLoopButton)
+    {
+
+        loopStart = player.getPosition();
+        juce::Logger::outputDebugString("Section loop START set to: " + juce::String(loopStart));
+    }
+    else if (button == &EndLoopButton)
+    {
+
+        loopEnd = player.getPosition();
+        juce::Logger::outputDebugString("Section loop END set to: " + juce::String(loopEnd));
+    }
+
+
     else if (button == &muteButton) {
         isMuted = !isMuted;
         if (isMuted) {
@@ -204,8 +310,6 @@ void PlayerGUI::buttonClicked(juce::Button* button) {
     else if (button == &addtenbackward) {
         player.tenbackward();
     }
-
-
 
 
 }
@@ -231,9 +335,10 @@ void PlayerGUI::sliderValueChanged(juce::Slider* slider)
     }
 }
 
-//===progress bar===
+
 void PlayerGUI::timerCallback()
 {
+    player.checkloop();
     if (player.getLength() > 0.0)
     {
         double currentPos = player.getPosition();
@@ -255,6 +360,7 @@ void PlayerGUI::timerCallback()
             currentMinutes, currentSeconds, totalMinutes, totalSeconds);
 
         timeLabel.setText(timeText, juce::dontSendNotification);
+        repaint();
     }
 }
 
@@ -267,9 +373,9 @@ int PlayerGUI::getNumRows() {
 
 void PlayerGUI::paintListBoxItem(int row, juce::Graphics& g, int width, int height, bool selected) {
     if (selected)
-        g.fillAll(juce::Colours::yellow);
+        g.fillAll(juce::Colour(0xff4DA6FF));
     else
-        g.fillAll(juce::Colours::darkgrey);
+        g.fillAll(juce::Colours::lightgrey);
 
     if (row < audiolist.size()) {
         g.drawText(audiolist[row].getFileName(),
@@ -284,7 +390,8 @@ void PlayerGUI::selectedRowsChanged(int lastRowSelected)
         auto file = audiolist[lastRowSelected];
         player.loadFile(file);
 
-
+        audioThumbnail.clear();
+        audioThumbnail.setSource(new juce::FileInputSource(file));
 
         juce::String title = file.getFileName();
         juce::String author = "Unknown";
@@ -300,5 +407,7 @@ void PlayerGUI::selectedRowsChanged(int lastRowSelected)
         titlelabel.setText("Title: " + title, juce::dontSendNotification);
         authorlabel.setText("Author: " + author, juce::dontSendNotification);
         durationlabel.setText("Duration: " + duration, juce::dontSendNotification);
+
+        repaint();
     }
 }
