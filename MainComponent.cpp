@@ -3,10 +3,10 @@
 MainComponent::MainComponent()
 {
     addAndMakeVisible(gui);
-    setSize(1200, 400);
+    setSize(870, 500);
     setAudioChannels(0, 2);
 }
-MainComponent::~MainComponent() 
+MainComponent::~MainComponent()
 {
     shutdownAudio();
 
@@ -36,4 +36,5 @@ void MainComponent::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
 }
+
 
