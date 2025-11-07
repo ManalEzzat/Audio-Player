@@ -1,40 +1,51 @@
+#include <JuceHeader.h>
 #include "MainComponent.h"
 
-MainComponent::MainComponent()
+// Our application class
+class SimpleAudioPlayer : public juce::JUCEApplication
 {
-    addAndMakeVisible(gui);
-    setSize(1200, 400);
-    setAudioChannels(0, 2);
-}
-MainComponent::~MainComponent() 
-{
-    shutdownAudio();
+public:
+    const juce::String getApplicationName() override { return "Simple Audio Player"; }
+    const juce::String getApplicationVersion() override { return "1.0"; }
 
-}
+    void initialise(const juce::String&) override
+    {
+        // Create and show the main window
+        mainWindow = std::make_unique<MainWindow>(getApplicationName());
+    }
 
-void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
-{
-    gui.getPlayer().prepareToPlay(samplesPerBlockExpected, sampleRate);
-}
+    void shutdown() override
+    {
+        mainWindow = nullptr; // Clean up
+    }
 
-void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
-{
-    gui.getPlayer().getNextAudioBlock(bufferToFill);
-}
+private:
+    // The main window of the app
+    class MainWindow : public juce::DocumentWindow
+    {
+    public:
+        MainWindow(juce::String name)
+            : DocumentWindow(name,
+                juce::Colours::lightgrey,
+                DocumentWindow::allButtons)
+        {
+            setUsingNativeTitleBar(true);
+            setContentOwned(new MainComponent(), true); // MainComponent = our UI + logic
+            centreWithSize(1000, 600);
+            setVisible(true);
+        }
 
-void MainComponent::releaseResources()
-{
-    gui.getPlayer().releaseResources();
-}
+        void closeButtonPressed() override
+        {
+            juce::JUCEApplication::getInstance()->systemRequestedQuit();
+        }
+    };
 
-void MainComponent::resized()
-{
-    gui.setBounds(getLocalBounds());
-}
+    std::unique_ptr<MainWindow> mainWindow;
+};
 
-void MainComponent::paint(juce::Graphics& g)
-{
-    g.fillAll(juce::Colours::black);
-}
+// This macro starts the app
+START_JUCE_APPLICATION(SimpleAudioPlayer)
+
 
 
