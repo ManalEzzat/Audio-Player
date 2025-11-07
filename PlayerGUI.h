@@ -7,6 +7,7 @@ class PlayerGUI : public juce::Component,
     public juce::ListBoxModel,
     public juce::Slider::Listener,
     public juce::Timer
+   
 {
 public:
     PlayerGUI();
@@ -33,12 +34,29 @@ private:
     juce::TextButton loadButton;
     juce::TextButton playButton;
     juce::TextButton pauseButton;
-    juce::TextButton loopButton;
+
     juce::TextButton goToStartButton;
     juce::TextButton endButton;
     juce::TextButton muteButton;
+    juce::TextButton fullLoopButton{ "Full Loop" };
+    juce::TextButton sectionLoopButton{ "Section Loop" };
+    juce::TextButton StartLoopButton{ "Set Start" };
+    juce::TextButton EndLoopButton{ "Set End" };
     juce::TextButton addtenforward;
     juce::TextButton addtenbackward;
+
+
+    juce::AudioThumbnailCache thumbnailCache;
+    juce::AudioThumbnail audioThumbnail;
+
+    juce::AudioFormatManager formatManager;
+
+
+    double loopStart = 0.0;
+    double loopEnd = 0.0;
+    bool fullLoopEnabled = false;
+    bool sectionLoopEnabled = false;
+
 
     bool isMuted = false;
     float previousVolume = 0.5f;
