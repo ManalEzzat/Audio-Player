@@ -85,7 +85,34 @@ double PlayerAudio::getLength() const
     return transportSource.getLengthInSeconds();
 }
 
+void PlayerAudio::FullLoop(bool shouldloop) {
+    isFullLoop = shouldloop;
+}
+void PlayerAudio::SectionLoop(bool shouldloop, double start, double end) {
+    isSectionLoop = shouldloop;
+    loopStart = start;
+    loopEnd = end;
+}
 
+void PlayerAudio::checkloop() {
+    double current = transportSource.getCurrentPosition();
+    double total = transportSource.getLengthInSeconds();
+
+   
+    if (isFullLoop && current >= total - 0.1) {  
+        transportSource.setPosition(0.0);
+        transportSource.start();  
+    }
+
+  
+    if (isSectionLoop && loopEnd > loopStart) {
+        if (current >= loopEnd - 0.1) {
+            transportSource.setPosition(loopStart);
+            if (!transportSource.isPlaying())
+                transportSource.start();
+        }
+    }
+}
 void PlayerAudio::setSpeed(double speed)
 {
     currentSpeed = speed;
@@ -105,30 +132,29 @@ void PlayerAudio::setSpeed(double speed)
         if (wasPlaying)
             transportSource.start();
     }
-
 }
 
-void PlayerAudio::tenforward() {
+    void PlayerAudio::tenforward() {
 
 
-    if (readerSource == nullptr) return;
-    double pos = transportSource.getCurrentPosition();
-    double length = transportSource.getLengthInSeconds();
-    pos = pos + 10;
-    if (pos > length) {
-        pos = length;
+        if (readerSource == nullptr) return;
+        double pos = transportSource.getCurrentPosition();
+        double length = transportSource.getLengthInSeconds();
+        pos = pos + 10;
+        if (pos > length) {
+            pos = length;
+
+        }
+        transportSource.setPosition(pos);
 
     }
-    transportSource.setPosition(pos);
+    void PlayerAudio::tenbackward() {
 
-}
-void PlayerAudio::tenbackward() {
-
-    if (readerSource == nullptr) return;
-    double pos = transportSource.getCurrentPosition();
-    pos = pos - 10;
-    if (pos < 0) {
-        pos = 0;
+        if (readerSource == nullptr) return;
+        double pos = transportSource.getCurrentPosition();
+        pos = pos - 10;
+        if (pos < 0) {
+            pos = 0;
+        }
+        transportSource.setPosition(pos);
     }
-    transportSource.setPosition(pos);
-}
